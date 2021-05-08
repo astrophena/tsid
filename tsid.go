@@ -16,6 +16,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"tailscale.com/client/tailscale"
+	"tailscale.com/tailcfg"
 )
 
 func init() {
@@ -47,8 +48,21 @@ func (Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyht
 
 	caddyhttp.SetVar(r.Context(), "tailscale.name", whois.UserProfile.DisplayName)
 	caddyhttp.SetVar(r.Context(), "tailscale.email", whois.UserProfile.LoginName)
+	caddyhttp.SetVar(r.Context(), "tailscale.groups", buildGroups(whois.Node))
 
 	return next.ServeHTTP(w, r)
+}
+
+func buildGroups(node *tailcfg.Node) string {
+	var groups []string
+
+	if !node.Hostinfo.ShareeNode {
+		groups = append(groups, "regular")
+	} else {
+		groups = append(groups, "guest")
+	}
+
+	return strings.Join(groups, ";")
 }
 
 // UnmarshalCaddyfile implements the caddyfile.Unmarshaler interface.
