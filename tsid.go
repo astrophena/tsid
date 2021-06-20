@@ -2,12 +2,15 @@
 // Use of this source code is governed by the MIT
 // license that can be found in the LICENSE.md file.
 
-// Package tsid is a Caddy middleware that identifies Tailscale users.
+// Package tsid is a Caddy middleware that allows requests only from
+// the Tailscale network and sets placeholders based on the Tailscale
+// node information.
 package tsid
 
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
 	"strings"
 
@@ -15,7 +18,9 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"inet.af/netaddr"
 	"tailscale.com/client/tailscale"
+	"tailscale.com/net/tsaddr"
 	"tailscale.com/tailcfg"
 )
 
@@ -32,12 +37,27 @@ func (Middleware) CaddyModule() caddy.ModuleInfo {
 	}
 }
 
-// Middleware is a HTTP handler that identifies Tailscale users and
-// sets some placeholders.
+// Middleware is a Caddy HTTP handler that allows requests only from
+// the Tailscale network and sets placeholders based on the Tailscale
+// node information.
 type Middleware struct{}
 
 // ServeHTTP implements the caddyhttp.MiddlewareHandler interface.
 func (Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+	ipStr, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return caddyhttp.Error(http.StatusInternalServerError, err)
+	}
+
+	ip, err := netaddr.ParseIP(ipStr)
+	if err != nil {
+		return caddyhttp.Error(http.StatusInternalServerError, err)
+	}
+
+	if !tsaddr.IsTailscaleIP(ip) {
+		return caddyhttp.Error(http.StatusForbidden, errors.New("not a Tailscale IP"))
+	}
+
 	whois, err := tailscale.WhoIs(context.Background(), r.RemoteAddr)
 	if err != nil {
 		if strings.Contains(err.Error(), "no match for IP:port") {
@@ -53,6 +73,10 @@ func (Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyht
 	return next.ServeHTTP(w, r)
 }
 
+// buildGroups is used for the DokuWiki authenvvars plugin
+// (https://www.dokuwiki.org/plugin:authenvvars).
+//
+// TODO(astrophena): Make this configurable.
 func buildGroups(node *tailcfg.Node) string {
 	var groups []string
 
