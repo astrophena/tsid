@@ -2,9 +2,9 @@
 // Use of this source code is governed by the MIT
 // license that can be found in the LICENSE.md file.
 
-// Package tsid is a Caddy middleware that allows requests only from
-// the Tailscale network and sets placeholders based on the Tailscale
-// node information.
+// Package tsid is a Caddy plugin that restricts access only to
+// requests coming from the Tailscale network and allows to identify
+// users behind these requests by setting some Caddy placeholders.
 package tsid
 
 import (
@@ -21,7 +21,6 @@ import (
 	"inet.af/netaddr"
 	"tailscale.com/client/tailscale"
 	"tailscale.com/net/tsaddr"
-	"tailscale.com/tailcfg"
 )
 
 func init() {
@@ -68,25 +67,8 @@ func (Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyht
 
 	caddyhttp.SetVar(r.Context(), "tailscale.name", whois.UserProfile.DisplayName)
 	caddyhttp.SetVar(r.Context(), "tailscale.email", whois.UserProfile.LoginName)
-	caddyhttp.SetVar(r.Context(), "tailscale.groups", buildGroups(whois.Node))
 
 	return next.ServeHTTP(w, r)
-}
-
-// buildGroups is used for the DokuWiki authenvvars plugin
-// (https://www.dokuwiki.org/plugin:authenvvars).
-//
-// TODO(astrophena): Make this configurable.
-func buildGroups(node *tailcfg.Node) string {
-	var groups []string
-
-	if !node.Hostinfo.ShareeNode {
-		groups = append(groups, "regular")
-	} else {
-		groups = append(groups, "guest")
-	}
-
-	return strings.Join(groups, ";")
 }
 
 // UnmarshalCaddyfile implements the caddyfile.Unmarshaler interface.
