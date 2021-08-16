@@ -4,8 +4,8 @@ behind these requests by setting some [Caddy] [placeholders]:
 
 | Placeholder                  | Description |
 |------------------------------|-------------|
-| {http.vars.tailscale.name}   | User name   |
-| {http.vars.tailscale.email}  | User email  |
+| `{http.vars.tailscale.name}` | User name   |
+| `{http.vars.tailscale.email}`| User email  |
 
 ## Usage
 
