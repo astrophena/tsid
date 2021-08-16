@@ -9,21 +9,21 @@ behind these requests by setting some [Caddy] [placeholders]:
 
 ## Usage
 
-- Build Caddy with this plugin by [xcaddy]:
+1. Build Caddy with this plugin by [xcaddy]:
 
         $ xcaddy build --with go.astrophena.name/tsid
 
-- Make sure that `tsid` is ordered first:
+2. Make sure that `tsid` is ordered first:
 
         {
           order tsid first
         }
 
-- Add the `tsid` directive to your Caddyfile and use the placeholders:
+3. Add the `tsid` directive to your Caddyfile and use the placeholders:
 
         tsid
         
-        respond "Hello, {http.vars.tailscale.name}"
+        respond "Hello, {http.vars.tailscale.name}!"
 
 ## License
 
@@ -32,4 +32,5 @@ behind these requests by setting some [Caddy] [placeholders]:
 [Caddy]: https://caddyserver.com
 [Tailscale]: https://tailscale.com
 [placeholders]: https://caddyserver.com/docs/conventions#placeholders
+[xcaddy]: https://github.com/caddyserver/xcaddy
 [MIT]: LICENSE.md
