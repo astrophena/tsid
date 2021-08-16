@@ -1,13 +1,14 @@
-<div align="center">
-  <h1>tsid</h1>
-</div>
+# `tsid`
 
-`tsid` is a Caddy middleware that allows requests only from the
-Tailscale network and sets placeholders based on the Tailscale node
-information.
+`tsid` is a [Caddy] plugin that allows you to identify users accessing
+services inside your [Tailscale] network.
+
+<!-- TODO(astrophena): Add usage examples. -->
 
 ## License
 
 [MIT] © Ilya Mateyko
 
+[Caddy]: https://caddyserver.com
+[Tailscale]: https://tailscale.com
 [MIT]: LICENSE.md
