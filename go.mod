@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/caddyserver/caddy/v2 v2.4.4
 	inet.af/netaddr v0.0.0-20210729200904-31d5ee66059c
-	tailscale.com v1.14.0
+	tailscale.com v1.1.1-0.20210901152542-7f29dcaac121
 )
 
 require (
@@ -54,6 +54,7 @@ require (
 	github.com/micromdm/scep/v2 v2.0.0 // indirect
 	github.com/miekg/dns v1.1.42 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
+	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.4 // indirect
