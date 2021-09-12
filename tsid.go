@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT
 // license that can be found in the LICENSE.md file.
 
-// Package tsid is a Caddy plugin that restricts access only to
+// Package tsid is a Caddy plugin that allows access only to
 // requests coming from the Tailscale network and allows to identify
 // users behind these requests by setting some Caddy placeholders.
 package tsid
