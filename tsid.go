@@ -8,7 +8,6 @@
 package tsid
 
 import (
-	"context"
 	"errors"
 	"net"
 	"net/http"
@@ -57,7 +56,7 @@ func (Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyht
 		return caddyhttp.Error(http.StatusForbidden, errors.New("not a Tailscale IP"))
 	}
 
-	whois, err := tailscale.WhoIs(context.Background(), r.RemoteAddr)
+	whois, err := tailscale.WhoIs(r.Context(), r.RemoteAddr)
 	if err != nil {
 		if strings.Contains(err.Error(), "no match for IP:port") {
 			return caddyhttp.Error(http.StatusForbidden, errors.New("not authorized"))
