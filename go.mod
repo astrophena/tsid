@@ -7,5 +7,5 @@ require (
 	github.com/aws/aws-sdk-go v1.38.52 // indirect
 	github.com/caddyserver/caddy/v2 v2.4.6
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
-	tailscale.com v1.22.1
+	tailscale.com v1.22.2
 )
