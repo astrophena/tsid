@@ -2317,8 +2317,8 @@ golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f h1:GGU+dLjvlC3qDwqYgL6Ug
 golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224/go.mod h1:deeaetjYA+DHMHg+sMSMI58GrEteJUUzzw7en6TJQcI=
 golang.zx2c4.com/wireguard v0.0.0-20210905140043-2ef39d47540c/go.mod h1:laHzsbfMhGSobUmruXWAyMKKHSqvIcrqZJMyHD+/3O8=
-golang.zx2c4.com/wireguard v0.0.0-20220317000134-95b48cdb3961 h1:oIXcKhP1Ge6cRqdpQuldl0hf4mjIsNaXojabghlHuTs=
-golang.zx2c4.com/wireguard v0.0.0-20220317000134-95b48cdb3961/go.mod h1:bVQfyl2sCM/QIIGHpWbFGfHPuDvqnCNkT6MQLTCjO/U=
+golang.zx2c4.com/wireguard v0.0.0-20220703234212-c31a7b1ab478 h1:vDy//hdR+GnROE3OdYbQKt9rdtNdHkDtONvpRwmls/0=
+golang.zx2c4.com/wireguard v0.0.0-20220703234212-c31a7b1ab478/go.mod h1:bVQfyl2sCM/QIIGHpWbFGfHPuDvqnCNkT6MQLTCjO/U=
 golang.zx2c4.com/wireguard/windows v0.4.10/go.mod h1:v7w/8FC48tTBm1IzScDVPEEb0/GjLta+T0ybpP9UWRg=
 golang.zx2c4.com/wireguard/windows v0.5.1 h1:OnYw96PF+CsIMrqWo5QP3Q59q5hY1rFErk/yN3cS+JQ=
 golang.zx2c4.com/wireguard/windows v0.5.1/go.mod h1:EApyTk/ZNrkbZjurHL1nleDYnsPpJYBO7LZEBCyDAHk=
@@ -2641,5 +2641,5 @@ sourcegraph.com/sourcegraph/appdash v0.0.0-20190731080439-ebfcffb1b5c0/go.mod h1
 sourcegraph.com/sourcegraph/go-diff v0.5.0/go.mod h1:kuch7UrkMzY0X+p9CRK03kfuPQ2zzQcaEFbx8wA8rck=
 sourcegraph.com/sqs/pbtypes v0.0.0-20180604144634-d3ebe8f20ae4/go.mod h1:ketZ/q3QxT9HOBeFhu6RdvsftgpsbFHBF5Cas6cDKZ0=
 src.elv.sh v0.16.3/go.mod h1:WxJAMoN8uQcg1ZwRvtjmbYAo6uKeJ8F7b25etVZ743w=
-tailscale.com v1.26.1 h1:b9Zqge5dOAtclPO3fGwArdtf5YdlyaRYlQfTRd7JD2s=
-tailscale.com v1.26.1/go.mod h1:eTdHYI3iFv/1+rCxh60KyY2QjVToVuvbhAR9UxKuigM=
+tailscale.com v1.26.2 h1:EBR0DXblI2Rx3mPe/YU29oZbQLnC8BtJYUTufmEygUY=
+tailscale.com v1.26.2/go.mod h1:KM47Ct0eNTFJqoazXV5XRdMnnWtD2HHDciY9RwyqweE=
