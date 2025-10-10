@@ -1,5 +1,5 @@
 // © 2021 Ilya Mateyko. All rights reserved.
-// Use of this source code is governed by the MIT
+// Use of this source code is governed by the ISC
 // license that can be found in the LICENSE.md file.
 
 // Package tsid is a Caddy plugin that allows access only to
@@ -11,55 +11,69 @@ import (
 	"errors"
 	"net"
 	"net/http"
-	"strings"
+	"net/netip"
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"inet.af/netaddr"
-	"tailscale.com/client/tailscale"
+	"go.astrophena.name/base/syncx"
+	"tailscale.com/client/local"
 	"tailscale.com/net/tsaddr"
 )
 
 func init() {
-	caddy.RegisterModule(&Middleware{})
+	caddy.RegisterModule(new(Middleware))
 	httpcaddyfile.RegisterHandlerDirective("tsid", parseCaddyfileHandler)
+	httpcaddyfile.RegisterDirectiveOrder("tsid", httpcaddyfile.After, "basicauth")
 }
 
 // CaddyModule returns the Caddy module information.
-func (Middleware) CaddyModule() caddy.ModuleInfo {
+func (_ *Middleware) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
 		ID:  "http.handlers.tsid",
-		New: func() caddy.Module { return &Middleware{} },
+		New: func() caddy.Module { return new(Middleware) },
 	}
 }
 
 // Middleware is a Caddy HTTP handler that allows requests only from
 // the Tailscale network and sets placeholders based on the Tailscale
 // node information.
-type Middleware struct{}
+type Middleware struct {
+	lc syncx.Lazy[*local.Client]
+}
+
+func (m *Middleware) localClient() *local.Client {
+	return m.lc.Get(func() *local.Client {
+		return new(local.Client)
+	})
+}
+
+var (
+	errNotTailscaleIP = errors.New("not a Tailscale IP")
+	errNotAuthorized  = errors.New("not authorized")
+)
 
 // ServeHTTP implements the caddyhttp.MiddlewareHandler interface.
-func (Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	ipStr, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return caddyhttp.Error(http.StatusInternalServerError, err)
 	}
 
-	ip, err := netaddr.ParseIP(ipStr)
+	ip, err := netip.ParseAddr(ipStr)
 	if err != nil {
 		return caddyhttp.Error(http.StatusInternalServerError, err)
 	}
 
 	if !tsaddr.IsTailscaleIP(ip) {
-		return caddyhttp.Error(http.StatusForbidden, errors.New("not a Tailscale IP"))
+		return caddyhttp.Error(http.StatusForbidden, errNotTailscaleIP)
 	}
 
-	whois, err := tailscale.WhoIs(r.Context(), r.RemoteAddr)
+	whois, err := m.localClient().WhoIs(r.Context(), r.RemoteAddr)
 	if err != nil {
-		if strings.Contains(err.Error(), "no match for IP:port") {
-			return caddyhttp.Error(http.StatusForbidden, errors.New("not authorized"))
+		if errors.Is(err, local.ErrPeerNotFound) {
+			return caddyhttp.Error(http.StatusForbidden, errNotAuthorized)
 		}
 		return caddyhttp.Error(http.StatusInternalServerError, err)
 	}
@@ -71,7 +85,7 @@ func (Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyht
 }
 
 // UnmarshalCaddyfile implements the caddyfile.Unmarshaler interface.
-func (Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error { return nil }
+func (_ *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error { return nil }
 
 // parseCaddyfileHandler unmarshals tokens from h into a new middleware handler value.
 func parseCaddyfileHandler(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
