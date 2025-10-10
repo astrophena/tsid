@@ -1,7 +1,3 @@
-`tsid` is no longer maintained. Feel free to fork.
-
----
-
 `tsid` is a [Caddy] plugin that allows access only to requests
 coming from the [Tailscale] network and allows to identify users
 behind these requests by setting some [Caddy] [placeholders]:
@@ -17,13 +13,7 @@ behind these requests by setting some [Caddy] [placeholders]:
 
         $ xcaddy build --with go.astrophena.name/tsid
 
-2. Make sure that `tsid` is ordered first:
-
-        {
-          order tsid first
-        }
-
-3. Add the `tsid` directive to your Caddyfile and use the placeholders:
+2. Add the `tsid` directive to your Caddyfile and use the placeholders:
 
         tsid
         
@@ -31,7 +21,7 @@ behind these requests by setting some [Caddy] [placeholders]:
 
 ## License
 
-[MIT] © Ilya Mateyko
+[ISC] © Ilya Mateyko
 
 [Caddy]: https://caddyserver.com
 [Tailscale]: https://tailscale.com
