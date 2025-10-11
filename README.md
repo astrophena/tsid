@@ -27,4 +27,4 @@ behind these requests by setting some [Caddy] [placeholders]:
 [Tailscale]: https://tailscale.com
 [placeholders]: https://caddyserver.com/docs/conventions#placeholders
 [xcaddy]: https://github.com/caddyserver/xcaddy
-[MIT]: LICENSE.md
+[ISC]: LICENSE.md
