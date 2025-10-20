@@ -1,11 +1,11 @@
 module go.astrophena.name/tsid
 
-go 1.25.1
+go 1.25.3
 
 require (
 	github.com/caddyserver/caddy/v2 v2.10.2
 	go.astrophena.name/base v0.12.5
-	tailscale.com v1.88.3
+	tailscale.com v1.90.0
 )
 
 require (
@@ -22,7 +22,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
-	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aryann/difflib v0.0.0-20210328193216-ff5ff6dc229b // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
