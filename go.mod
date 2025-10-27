@@ -5,7 +5,7 @@ go 1.25.3
 require (
 	github.com/caddyserver/caddy/v2 v2.10.2
 	go.astrophena.name/base v0.13.0
-	tailscale.com v1.90.0
+	tailscale.com v1.90.3
 )
 
 require (
