@@ -12,12 +12,12 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"sync"
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"go.astrophena.name/base/syncx"
 	"tailscale.com/client/local"
 	"tailscale.com/net/tsaddr"
 )
@@ -40,13 +40,15 @@ func (_ *Middleware) CaddyModule() caddy.ModuleInfo {
 // the Tailscale network and sets placeholders based on the Tailscale
 // node information.
 type Middleware struct {
-	lc syncx.Lazy[*local.Client]
+	init sync.Once
+	lc   *local.Client
 }
 
 func (m *Middleware) localClient() *local.Client {
-	return m.lc.Get(func() *local.Client {
-		return new(local.Client)
+	m.init.Do(func() {
+		m.lc = new(local.Client)
 	})
+	return m.lc
 }
 
 var (
