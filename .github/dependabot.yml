@@ -1,14 +1,17 @@
 version: 2
+multi-ecosystem-groups:
+  all:
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "all:"
+    labels: []
 updates:
-  - package-ecosystem: 'github-actions'
-    directory: '/'
-    schedule:
-      interval: 'weekly'
-    commit-message:
-      prefix: '.github:'
-  - package-ecosystem: 'gomod'
-    directory: '/'
-    schedule:
-      interval: 'weekly'
-    commit-message:
-      prefix: 'go.mod:'
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "all"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "all"
