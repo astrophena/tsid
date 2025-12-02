@@ -4,7 +4,7 @@ go 1.25.3
 
 require (
 	github.com/caddyserver/caddy/v2 v2.10.2
-	tailscale.com v1.90.8
+	tailscale.com v1.92.0
 )
 
 require (
@@ -129,7 +129,7 @@ require (
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/crypto/x509roots/fallback v0.0.0-20251009181029-0b7aa0cfb07b // indirect
 	golang.org/x/exp v0.0.0-20251009144603-d2f985daa21b // indirect
-	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/mod v0.30.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.32.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
@@ -137,7 +137,7 @@ require (
 	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	golang.org/x/tools v0.38.0 // indirect
+	golang.org/x/tools v0.39.0 // indirect
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
 	google.golang.org/api v0.252.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251007200510-49b9836ed3ff // indirect
