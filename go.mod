@@ -1,10 +1,10 @@
 module go.astrophena.name/tsid
 
-go 1.25.3
+go 1.25.5
 
 require (
 	github.com/caddyserver/caddy/v2 v2.10.2
-	tailscale.com v1.92.0
+	tailscale.com v1.92.1
 )
 
 require (
