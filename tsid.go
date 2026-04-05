@@ -5,6 +5,7 @@
 // Package tsid is a Caddy plugin that allows access only to
 // requests coming from the Tailscale network and allows to identify
 // users behind these requests by setting some Caddy placeholders.
+
 package tsid
 
 import (
@@ -28,12 +29,10 @@ func init() {
 	httpcaddyfile.RegisterDirectiveOrder("tsid", httpcaddyfile.After, "basicauth")
 }
 
-// CaddyModule returns the Caddy module information.
-func (_ *Middleware) CaddyModule() caddy.ModuleInfo {
-	return caddy.ModuleInfo{
-		ID:  "http.handlers.tsid",
-		New: func() caddy.Module { return new(Middleware) },
-	}
+func parseCaddyfileHandler(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
+	m := new(Middleware)
+	err := m.UnmarshalCaddyfile(h.Dispenser)
+	return m, err
 }
 
 // Middleware is a Caddy HTTP handler that allows requests only from
@@ -43,6 +42,17 @@ type Middleware struct {
 	init sync.Once
 	lc   *local.Client
 }
+
+// CaddyModule returns the Caddy module information.
+func (*Middleware) CaddyModule() caddy.ModuleInfo {
+	return caddy.ModuleInfo{
+		ID:  "http.handlers.tsid",
+		New: func() caddy.Module { return new(Middleware) },
+	}
+}
+
+// UnmarshalCaddyfile implements the [caddyfile.Unmarshaler] interface.
+func (_ *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error { return nil }
 
 func (m *Middleware) localClient() *local.Client {
 	m.init.Do(func() {
@@ -56,7 +66,7 @@ var (
 	errNotAuthorized  = errors.New("not authorized")
 )
 
-// ServeHTTP implements the caddyhttp.MiddlewareHandler interface.
+// ServeHTTP implements the [caddyhttp.MiddlewareHandler] interface.
 func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	ipStr, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -84,16 +94,6 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 	caddyhttp.SetVar(r.Context(), "tailscale.email", whois.UserProfile.LoginName)
 
 	return next.ServeHTTP(w, r)
-}
-
-// UnmarshalCaddyfile implements the caddyfile.Unmarshaler interface.
-func (_ *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error { return nil }
-
-// parseCaddyfileHandler unmarshals tokens from h into a new middleware handler value.
-func parseCaddyfileHandler(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
-	m := &Middleware{}
-	err := m.UnmarshalCaddyfile(h.Dispenser)
-	return m, err
 }
 
 // Interface guards.

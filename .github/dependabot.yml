@@ -1,17 +1,14 @@
 version: 2
-multi-ecosystem-groups:
-  all:
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "all:"
-    labels: []
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
-    patterns: ["*"]
-    multi-ecosystem-group: "all"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 14
   - package-ecosystem: "gomod"
     directory: "/"
-    patterns: ["*"]
-    multi-ecosystem-group: "all"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 14
