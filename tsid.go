@@ -90,8 +90,19 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 		return caddyhttp.Error(http.StatusInternalServerError, err)
 	}
 
+	// User information.
+	caddyhttp.SetVar(r.Context(), "tailscale.id", whois.UserProfile.ID.String())
 	caddyhttp.SetVar(r.Context(), "tailscale.name", whois.UserProfile.DisplayName)
 	caddyhttp.SetVar(r.Context(), "tailscale.email", whois.UserProfile.LoginName)
+	caddyhttp.SetVar(r.Context(), "tailscale.profile_pic_url", whois.UserProfile.ProfilePicURL)
+
+	// Node information.
+	caddyhttp.SetVar(r.Context(), "tailscale.node.id", whois.Node.ID.String())
+	caddyhttp.SetVar(r.Context(), "tailscale.node.name", whois.Node.Name)
+	caddyhttp.SetVar(r.Context(), "tailscale.node.os", whois.Node.Hostinfo.OS())
+	caddyhttp.SetVar(r.Context(), "tailscale.node.os_version", whois.Node.Hostinfo.OSVersion())
+	caddyhttp.SetVar(r.Context(), "tailscale.node.device_model", whois.Node.Hostinfo.DeviceModel())
+	caddyhttp.SetVar(r.Context(), "tailscale.node.machine", whois.Node.Hostinfo.Machine())
 
 	return next.ServeHTTP(w, r)
 }
