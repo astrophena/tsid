@@ -1,6 +1,6 @@
 module go.astrophena.name/tsid
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/caddyserver/caddy/v2 v2.11.2
