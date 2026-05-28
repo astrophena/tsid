@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/caddyserver/caddy/v2 v2.11.3
-	tailscale.com v1.98.0
+	tailscale.com v1.98.1
 )
 
 require (
