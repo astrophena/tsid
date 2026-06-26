@@ -2,18 +2,19 @@
 [Tailscale] network and allows to identify users behind these requests by
 setting some [Caddy] [placeholders]:
 
-| Placeholder                               | Description                                                |
-| ----------------------------------------- | ---------------------------------------------------------- |
-| `{http.vars.tailscale.id}`                | User's Tailscale ID                                        |
-| `{http.vars.tailscale.name}`              | User's display name (e.g., "John Doe")                     |
-| `{http.vars.tailscale.email}`             | User's login name or email address                         |
-| `{http.vars.tailscale.profile_pic_url}`   | URL to the user's Tailscale profile picture                |
-| `{http.vars.tailscale.node.id}`           | Tailscale ID of the connecting node                        |
-| `{http.vars.tailscale.node.name}`         | Name of the connecting node                                |
-| `{http.vars.tailscale.node.os}`           | Operating system of the node                               |
-| `{http.vars.tailscale.node.os_version}`   | OS version of the node                                     |
-| `{http.vars.tailscale.node.device_model}` | Device model of the node (usually set for mobile devices)  |
-| `{http.vars.tailscale.node.machine}`      | Machine architecture of the node (e.g., `x86_64`, `arm64`) |
+| Placeholder                               | Description                                                    |
+| ----------------------------------------- | ---------------------------------------------------------------|
+| `{http.vars.tailscale.id}`                | User's Tailscale ID                                            |
+| `{http.vars.tailscale.name}`              | User's display name (e.g., "John Doe")                         |
+| `{http.vars.tailscale.email}`             | User's login name or email address                             |
+| `{http.vars.tailscale.profile_pic_url}`   | URL to the user's Tailscale profile picture                    |
+| `{http.vars.tailscale.node.id}`           | Tailscale ID of the connecting node                            |
+| `{http.vars.tailscale.node.name}`         | Name of the connecting node                                    |
+| `{http.vars.tailscale.node.os}`           | Operating system of the node                                   |
+| `{http.vars.tailscale.node.os_version}`   | OS version of the node                                         |
+| `{http.vars.tailscale.node.device_model}` | Device model of the node (usually set for mobile devices)      |
+| `{http.vars.tailscale.node.machine}`      | Machine architecture of the node (e.g., `x86_64`, `arm64`)     |
+| `{http.vars.tailscale.app_capabilities}`  | Accepted Tailscale app capabilities as RFC 2047 Q-encoded JSON |
 
 ## Usage
 
@@ -26,6 +27,22 @@ setting some [Caddy] [placeholders]:
        tsid
 
        respond "Hello, {http.vars.tailscale.name}!"
+
+   To forward Tailscale application capabilities to an upstream, explicitly
+   accept the capabilities in `tsid` and then pass the resulting placeholder as
+   the `Tailscale-App-Capabilities` header:
+
+       tsid {
+         accept_app_capabilities example.com/cap/foo example.com/cap/bar
+       }
+
+       reverse_proxy localhost:3000 {
+         header_up Tailscale-App-Capabilities {http.vars.tailscale.app_capabilities}
+       }
+
+   Only capabilities listed by `accept_app_capabilities` are exposed in the
+   placeholder. Incoming `Tailscale-App-Capabilities` headers are removed before
+   the request continues.
 
 ## License
 
