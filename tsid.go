@@ -8,10 +8,13 @@
 package tsid
 
 import (
+	"encoding/json"
 	"errors"
+	"mime"
 	"net"
 	"net/http"
 	"net/netip"
+	"regexp"
 	"sync"
 
 	"github.com/caddyserver/caddy/v2"
@@ -20,6 +23,7 @@ import (
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"tailscale.com/client/local"
 	"tailscale.com/net/tsaddr"
+	"tailscale.com/tailcfg"
 )
 
 func init() {
@@ -38,6 +42,8 @@ func parseCaddyfileHandler(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler,
 // the Tailscale network and sets placeholders based on the Tailscale
 // node information.
 type Middleware struct {
+	AcceptAppCaps []tailcfg.PeerCapability `json:"accept_app_capabilities,omitempty"`
+
 	init sync.Once
 	lc   *local.Client
 }
@@ -51,7 +57,33 @@ func (*Middleware) CaddyModule() caddy.ModuleInfo {
 }
 
 // UnmarshalCaddyfile implements the [caddyfile.Unmarshaler] interface.
-func (_ *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error { return nil }
+func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+	for d.Next() {
+		if d.NextArg() {
+			return d.ArgErr()
+		}
+
+		for nesting := d.Nesting(); d.NextBlock(nesting); {
+			switch d.Val() {
+			case "accept_app_capabilities":
+				args := d.RemainingArgs()
+				if len(args) == 0 {
+					return d.ArgErr()
+				}
+				for _, arg := range args {
+					if !validAppCap.MatchString(arg) {
+						return d.Errf("%q does not match the form {domain}/{name}, where domain must be a fully qualified domain name", arg)
+					}
+					m.AcceptAppCaps = append(m.AcceptAppCaps, tailcfg.PeerCapability(arg))
+				}
+			default:
+				return d.Errf("unrecognized subdirective %q", d.Val())
+			}
+		}
+	}
+
+	return nil
+}
 
 func (m *Middleware) localClient() *local.Client {
 	m.init.Do(func() {
@@ -65,8 +97,15 @@ var (
 	errNotAuthorized  = errors.New("not authorized")
 )
 
+const appCapabilitiesHeaderName = "Tailscale-App-Capabilities"
+
+// An application capability name has the form {domain}/{name}.
+var validAppCap = regexp.MustCompile(`^([\pL\pN-]+\.)+[\pL\pN-]+/[\pL\pN-/]+$`)
+
 // ServeHTTP implements the [caddyhttp.MiddlewareHandler] interface.
 func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+	r.Header.Del(appCapabilitiesHeaderName)
+
 	ipStr, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return caddyhttp.Error(http.StatusInternalServerError, err)
@@ -103,7 +142,30 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 	caddyhttp.SetVar(r.Context(), "tailscale.node.device_model", whois.Node.Hostinfo.DeviceModel())
 	caddyhttp.SetVar(r.Context(), "tailscale.node.machine", whois.Node.Hostinfo.Machine())
 
+	if len(m.AcceptAppCaps) > 0 {
+		appCaps, err := acceptedAppCapabilitiesJSON(whois.CapMap, m.AcceptAppCaps)
+		if err != nil {
+			return caddyhttp.Error(http.StatusInternalServerError, err)
+		}
+		caddyhttp.SetVar(r.Context(), "tailscale.app_capabilities", appCaps)
+	}
+
 	return next.ServeHTTP(w, r)
+}
+
+func acceptedAppCapabilitiesJSON(peerCaps tailcfg.PeerCapMap, acceptCaps []tailcfg.PeerCapability) (string, error) {
+	filtered := make(tailcfg.PeerCapMap, len(acceptCaps))
+	for _, cap := range acceptCaps {
+		if peerCaps.HasCapability(cap) {
+			filtered[cap] = peerCaps[cap]
+		}
+	}
+
+	b, err := json.Marshal(filtered)
+	if err != nil {
+		return "", err
+	}
+	return mime.QEncoding.Encode("utf-8", string(b)), nil
 }
 
 // Interface guards.
