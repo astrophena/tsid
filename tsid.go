@@ -10,6 +10,7 @@ package tsid
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"mime"
 	"net"
 	"net/http"
@@ -42,7 +43,8 @@ func parseCaddyfileHandler(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler,
 // the Tailscale network and sets placeholders based on the Tailscale
 // node information.
 type Middleware struct {
-	AcceptAppCaps []tailcfg.PeerCapability `json:"accept_app_capabilities,omitempty"`
+	AcceptAppCaps  []tailcfg.PeerCapability `json:"accept_app_capabilities,omitempty"`
+	RequireAppCaps []tailcfg.PeerCapability `json:"require_app_capabilities,omitempty"`
 
 	init sync.Once
 	lc   *local.Client
@@ -66,16 +68,17 @@ func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 		for nesting := d.Nesting(); d.NextBlock(nesting); {
 			switch d.Val() {
 			case "accept_app_capabilities":
-				args := d.RemainingArgs()
-				if len(args) == 0 {
-					return d.ArgErr()
+				caps, err := appCapabilityArgs(d)
+				if err != nil {
+					return err
 				}
-				for _, arg := range args {
-					if !validAppCap.MatchString(arg) {
-						return d.Errf("%q does not match the form {domain}/{name}, where domain must be a fully qualified domain name", arg)
-					}
-					m.AcceptAppCaps = append(m.AcceptAppCaps, tailcfg.PeerCapability(arg))
+				m.AcceptAppCaps = append(m.AcceptAppCaps, caps...)
+			case "require_app_capabilities":
+				caps, err := appCapabilityArgs(d)
+				if err != nil {
+					return err
 				}
+				m.RequireAppCaps = append(m.RequireAppCaps, caps...)
 			default:
 				return d.Errf("unrecognized subdirective %q", d.Val())
 			}
@@ -83,6 +86,22 @@ func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	}
 
 	return nil
+}
+
+func appCapabilityArgs(d *caddyfile.Dispenser) ([]tailcfg.PeerCapability, error) {
+	args := d.RemainingArgs()
+	if len(args) == 0 {
+		return nil, d.ArgErr()
+	}
+
+	caps := make([]tailcfg.PeerCapability, 0, len(args))
+	for _, arg := range args {
+		if !validAppCap.MatchString(arg) {
+			return nil, d.Errf("%q does not match the form {domain}/{name}, where domain must be a fully qualified domain name", arg)
+		}
+		caps = append(caps, tailcfg.PeerCapability(arg))
+	}
+	return caps, nil
 }
 
 func (m *Middleware) localClient() *local.Client {
@@ -93,8 +112,9 @@ func (m *Middleware) localClient() *local.Client {
 }
 
 var (
-	errNotTailscaleIP = errors.New("not a Tailscale IP")
-	errNotAuthorized  = errors.New("not authorized")
+	errNotTailscaleIP               = errors.New("not a Tailscale IP")
+	errNotAuthorized                = errors.New("not authorized")
+	errMissingRequiredAppCapability = errors.New("missing required Tailscale app capability")
 )
 
 const appCapabilitiesHeaderName = "Tailscale-App-Capabilities"
@@ -126,6 +146,10 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next cadd
 			return caddyhttp.Error(http.StatusForbidden, errNotAuthorized)
 		}
 		return caddyhttp.Error(http.StatusInternalServerError, err)
+	}
+
+	if missing := missingAppCapabilities(whois.CapMap, m.RequireAppCaps); len(missing) > 0 {
+		return caddyhttp.Error(http.StatusForbidden, fmt.Errorf("%w: %s", errMissingRequiredAppCapability, missing[0]))
 	}
 
 	// User information.
@@ -166,6 +190,16 @@ func acceptedAppCapabilitiesJSON(peerCaps tailcfg.PeerCapMap, acceptCaps []tailc
 		return "", err
 	}
 	return mime.QEncoding.Encode("utf-8", string(b)), nil
+}
+
+func missingAppCapabilities(peerCaps tailcfg.PeerCapMap, requireCaps []tailcfg.PeerCapability) []tailcfg.PeerCapability {
+	var missing []tailcfg.PeerCapability
+	for _, cap := range requireCaps {
+		if !peerCaps.HasCapability(cap) {
+			missing = append(missing, cap)
+		}
+	}
+	return missing
 }
 
 // Interface guards.
