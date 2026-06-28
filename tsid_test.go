@@ -3,6 +3,7 @@ package tsid
 import (
 	"encoding/json"
 	"mime"
+	"slices"
 	"testing"
 
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
@@ -11,16 +12,17 @@ import (
 
 func TestUnmarshalCaddyfile(t *testing.T) {
 	cases := map[string]struct {
-		input    string
-		wantCaps []tailcfg.PeerCapability
-		wantErr  bool
+		input           string
+		wantAcceptCaps  []tailcfg.PeerCapability
+		wantRequireCaps []tailcfg.PeerCapability
+		wantErr         bool
 	}{
 		"empty": {
 			input: "tsid",
 		},
 		"single line": {
 			input: "tsid {\n\taccept_app_capabilities example.com/cap/foo example.com/cap/bar\n}",
-			wantCaps: []tailcfg.PeerCapability{
+			wantAcceptCaps: []tailcfg.PeerCapability{
 				"example.com/cap/foo",
 				"example.com/cap/bar",
 			},
@@ -30,9 +32,31 @@ func TestUnmarshalCaddyfile(t *testing.T) {
 				accept_app_capabilities example.com/cap/foo
 				accept_app_capabilities example.org/cap/bar/baz
 			}`,
-			wantCaps: []tailcfg.PeerCapability{
+			wantAcceptCaps: []tailcfg.PeerCapability{
 				"example.com/cap/foo",
 				"example.org/cap/bar/baz",
+			},
+		},
+		"required capabilities": {
+			input: `tsid {
+				require_app_capabilities example.com/cap/foo
+				require_app_capabilities example.org/cap/bar/baz
+			}`,
+			wantRequireCaps: []tailcfg.PeerCapability{
+				"example.com/cap/foo",
+				"example.org/cap/bar/baz",
+			},
+		},
+		"accepted and required capabilities": {
+			input: `tsid {
+				accept_app_capabilities example.com/cap/forward
+				require_app_capabilities example.com/cap/allow
+			}`,
+			wantAcceptCaps: []tailcfg.PeerCapability{
+				"example.com/cap/forward",
+			},
+			wantRequireCaps: []tailcfg.PeerCapability{
+				"example.com/cap/allow",
 			},
 		},
 		"directive args rejected": {
@@ -47,8 +71,16 @@ func TestUnmarshalCaddyfile(t *testing.T) {
 			input:   "tsid {\n\taccept_app_capabilities\n}",
 			wantErr: true,
 		},
-		"invalid capability rejected": {
+		"empty require list rejected": {
+			input:   "tsid {\n\trequire_app_capabilities\n}",
+			wantErr: true,
+		},
+		"invalid accepted capability rejected": {
 			input:   "tsid {\n\taccept_app_capabilities invalid\n}",
+			wantErr: true,
+		},
+		"invalid required capability rejected": {
+			input:   "tsid {\n\trequire_app_capabilities invalid\n}",
 			wantErr: true,
 		},
 	}
@@ -63,13 +95,11 @@ func TestUnmarshalCaddyfile(t *testing.T) {
 			if tc.wantErr {
 				return
 			}
-			if len(m.AcceptAppCaps) != len(tc.wantCaps) {
-				t.Fatalf("got %v caps, want %v", m.AcceptAppCaps, tc.wantCaps)
+			if !slices.Equal(m.AcceptAppCaps, tc.wantAcceptCaps) {
+				t.Fatalf("accept caps = %v, want %v", m.AcceptAppCaps, tc.wantAcceptCaps)
 			}
-			for i := range tc.wantCaps {
-				if m.AcceptAppCaps[i] != tc.wantCaps[i] {
-					t.Fatalf("cap %d = %q, want %q", i, m.AcceptAppCaps[i], tc.wantCaps[i])
-				}
+			if !slices.Equal(m.RequireAppCaps, tc.wantRequireCaps) {
+				t.Fatalf("require caps = %v, want %v", m.RequireAppCaps, tc.wantRequireCaps)
 			}
 		})
 	}
@@ -144,5 +174,27 @@ func TestAcceptedAppCapabilitiesJSONEmptyObject(t *testing.T) {
 	}
 	if got != "{}" {
 		t.Fatalf("acceptedAppCapabilitiesJSON() = %q, want {}", got)
+	}
+}
+
+func TestMissingAppCapabilities(t *testing.T) {
+	peerCaps := tailcfg.PeerCapMap{
+		"example.com/cap/foo": nil,
+		"example.com/cap/bar": {
+			tailcfg.RawMessage(`{"role":"admin"}`),
+		},
+	}
+	got := missingAppCapabilities(peerCaps, []tailcfg.PeerCapability{
+		"example.com/cap/foo",
+		"example.com/cap/missing",
+		"example.com/cap/bar",
+		"example.com/cap/also-missing",
+	})
+	want := []tailcfg.PeerCapability{
+		"example.com/cap/missing",
+		"example.com/cap/also-missing",
+	}
+	if !slices.Equal(got, want) {
+		t.Fatalf("missingAppCapabilities() = %v, want %v", got, want)
 	}
 }

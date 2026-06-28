@@ -44,6 +44,16 @@ setting some [Caddy] [placeholders]:
    placeholder. Incoming `Tailscale-App-Capabilities` headers are removed before
    the request continues.
 
+   To deny requests unless the connecting peer has one or more app
+   capabilities, require them in `tsid`:
+
+       tsid {
+         require_app_capabilities example.com/cap/foo
+       }
+
+   When multiple capabilities are listed, all of them are required. Capability
+   values are ignored for this check; the peer only needs to have the capability.
+
 ## License
 
 [ISC] © Ilya Mateyko
